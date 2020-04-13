@@ -1,4 +1,9 @@
 const Scraper=require('./scrap')
+const csv = require('csv-parser')
+const fs = require('fs')
+const results = [];
+const fastcsv = require('fast-csv');
+const ws = fs.createWriteStream("out.csv");
  //change product name according to your need
  //we can also add country name along with productname for more accurate results.
 let productName="kulfi";
@@ -11,11 +16,53 @@ const google = new Scraper({
     headless: false,
   }
 });
+
+
+
+let data=[]
+fs.createReadStream('data.csv')
+  .pipe(csv())
+  .on('data', (data) => results.push(data))
+  .on('end', async() => {
+    
+     let res=await get(results)
+     console.log(res)
+     for(let i=0;i<results.length-1;i++){
+         let temp=await results[i]
+         temp.url1=await res[i][0];
+         temp.url2= await res[i][1];
+         temp.url3=await res[i][2];
+         console.log(temp)
+         data.push(temp)
+
+     }
+     console.log("why????")
+    fastcsv
+    .write(data,{ headers: true })
+    .pipe(ws);
+  });
  
-(async () => {
-  const results = await google.scrape(productName, noOfImages);
-  let i=1;
-  results.forEach(imgUrl=>{
-      console.log(i++ +". "+imgUrl.url)
-  })
-})();
+ async function get(arr){
+  let res2=[]
+  for (const e1 of arr) {
+    let e=e1.NAME
+
+  async function res(){
+    console.log(e)
+    let res1=[]
+ try {  const results = await google.scrape(String(e), noOfImages);
+  
+     results.forEach(imgUrl=>{
+        res1.push(imgUrl.url)
+    })}catch(e){
+            console.log(e)
+    }
+    
+  return res1;
+  };
+  let p=await res();
+  res2.push(p);
+ }
+ return res2;
+}
+

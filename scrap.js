@@ -53,10 +53,13 @@ class GoogleScraper {
     
     await page.setViewport({ width: 1920, height: 1080 });
     await page.setUserAgent(this.userAgent);
-    await page.waitFor(500);
+    await page.waitFor(1000);
     await page.click(".ssfWCe")
+    await page.waitFor(1000);
     const example = await page.$$('.xFo9P');
+    
     await example[2].click();
+    await page.waitFor(1000);
     const btn2= await page.$$(".igM9Le")
     await btn2[2].click();
     await page.waitForNavigation();
