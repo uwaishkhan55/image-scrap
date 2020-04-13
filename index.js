@@ -13,7 +13,7 @@ let noOfImages=5;
 const google = new Scraper({
   puppeteer: {
       //if yout want to check what is happening behind the script then just change the value of headless -> false.
-    headless: false,
+    headless: true,
   }
 });
 
