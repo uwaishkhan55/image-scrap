@@ -43,12 +43,16 @@ class GoogleScraper {
 
     logger.info(`Start Google search for "${searchQuery}"`);
     const browser = await puppeteer.launch({
-      ...this.puppeteerOptions
+      ...this.puppeteerOptions,
+      args: [
+        '--blink-settings=imagesEnabled=false'
+      ]
     });
     const page = await browser.newPage();
+    
     await page.setBypassCSP(true);
     await page.goto(query, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'domcontentloaded'
     });
     
     await page.setViewport({ width: 1920, height: 1080 });

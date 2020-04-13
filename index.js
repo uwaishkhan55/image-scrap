@@ -22,11 +22,13 @@ const google = new Scraper({
 let data=[]
 fs.createReadStream('data.csv')
   .pipe(csv())
-  .on('data', (data) => results.push(data))
+  .on('data', (data) => {
+    if(Object.keys(data).length>=1)results.push(data)
+  })
   .on('end', async() => {
-    
+      console.log(results)
      let res=await get(results)
-     console.log(res)
+     console.log(results)
      for(let i=0;i<results.length-1;i++){
          let temp=await results[i]
          temp.url1=await res[i][0];
@@ -50,7 +52,9 @@ fs.createReadStream('data.csv')
   async function res(){
     console.log(e)
     let res1=[]
- try {  const results = await google.scrape(String(e), noOfImages);
+ try {  
+   if(String(e)==undefined) return
+   const results = await google.scrape(String(e), noOfImages);
   
      results.forEach(imgUrl=>{
         res1.push(imgUrl.url)
