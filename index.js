@@ -13,7 +13,7 @@ let noOfImages=5;
 const google = new Scraper({
   puppeteer: {
       //if yout want to check what is happening behind the script then just change the value of headless -> false.
-    headless: true,
+    headless: false,
   }
 });
 
@@ -29,16 +29,16 @@ fs.createReadStream('data.csv')
       console.log(results)
      let res=await get(results)
      console.log(results)
-     for(let i=0;i<results.length-1;i++){
+     for(let i=0;i<results.length;i++){
          let temp=await results[i]
-         temp.url1=await res[i][0];
-         temp.url2= await res[i][1];
-         temp.url3=await res[i][2];
+         temp.URL1=await res[i][0];
+         temp.URL2= await res[i][1];
+         temp.URL3=await res[i][2];
          console.log(temp)
          data.push(temp)
 
      }
-     console.log("why????")
+     
     fastcsv
     .write(data,{ headers: true })
     .pipe(ws);
@@ -53,7 +53,6 @@ fs.createReadStream('data.csv')
     console.log(e)
     let res1=[]
  try {  
-   if(String(e)==undefined) return
    const results = await google.scrape(String(e), noOfImages);
   
      results.forEach(imgUrl=>{

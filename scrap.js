@@ -49,21 +49,29 @@ class GoogleScraper {
       ]
     });
     const page = await browser.newPage();
+    await page.setRequestInterception(true);
+
+    page.on('request', (req) => {
+        if(req.resourceType() === 'image'){
+            req.abort();
+        }
+        else {
+            req.continue();
+        }
+    });
     
     await page.setBypassCSP(true);
-    await page.goto(query, {
-      waitUntil: 'domcontentloaded'
-    });
+    await page.goto(query);
     
     await page.setViewport({ width: 1920, height: 1080 });
     await page.setUserAgent(this.userAgent);
-    await page.waitFor(1000);
+    await page.waitFor(500);
     await page.click(".ssfWCe")
-    await page.waitFor(1000);
+    await page.waitFor(500);
     const example = await page.$$('.xFo9P');
     
     await example[2].click();
-    await page.waitFor(1000);
+    await page.waitFor(500);
     const btn2= await page.$$(".igM9Le")
     await btn2[2].click();
     await page.waitForNavigation();
