@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-const puppeteer = require('puppeteer');
-const cheerio = require('cheerio');
-const url = require('url');
-const logger = require('./logger');
+const puppeteer = require("puppeteer");
+const cheerio = require("cheerio");
+const url = require("url");
+const logger = require("./logger");
 
 /**
  * @param {string} userAgent user agent
@@ -12,7 +12,7 @@ const logger = require('./logger');
  */
 class GoogleScraper {
   constructor({
-    userAgent = 'Mozilla/5.0 (X11; Linux i686; rv:64.0) Gecko/20100101 Firefox/64.0',
+    userAgent = "Mozilla/5.0 (X11; Linux i686; rv:64.0) Gecko/20100101 Firefox/64.0",
     scrollDelay = 100,
     puppeteer = {},
     tbs = {},
@@ -25,56 +25,36 @@ class GoogleScraper {
 
   _parseRequestParameters(tbs) {
     if (tbs === undefined) {
-      return '';
+      return "";
     }
 
     const options = Object.keys(tbs)
-      .filter(key => tbs[key])
-      .map(key => `${key}:${tbs[key]}`)
-      .join(',');
+      .filter((key) => tbs[key])
+      .map((key) => `${key}:${tbs[key]}`)
+      .join(",");
     return encodeURIComponent(options);
   }
 
   async scrape(searchQuery, limit = 100) {
-    if (searchQuery === undefined || searchQuery === '') {
-      throw new Error('Invalid search query provided');
+    if (searchQuery === undefined || searchQuery === "") {
+      throw new Error("Invalid search query provided");
     }
-    const query = `https://www.google.com/search?q=${searchQuery}&source=lnms&tbm=isch&sa=X&tbs=${this.tbs}`;
+    const query = `https://www.google.com/search?q=${searchQuery}&source=lnms&tbm=isch&sa=X&tbs=${this.tbs}&tbs=sur%3Afmc&tbs=sur%3Afmc`;
 
     logger.info(`Start Google search for "${searchQuery}"`);
     const browser = await puppeteer.launch({
       ...this.puppeteerOptions,
-      args: [
-        '--blink-settings=imagesEnabled=false'
-      ]
+      args: ["--blink-settings=imagesEnabled=false"],
     });
     const page = await browser.newPage();
-    await page.setRequestInterception(true);
-
-    page.on('request', (req) => {
-        if(req.resourceType() === 'image'){
-            req.abort();
-        }
-        else {
-            req.continue();
-        }
-    });
-    
     await page.setBypassCSP(true);
-    await page.goto(query);
-    
+    await page.goto(query, {
+      waitUntil: "networkidle2",
+      timeout: 12000,
+    });
     await page.setViewport({ width: 1920, height: 1080 });
     await page.setUserAgent(this.userAgent);
-    await page.waitFor(500);
-    await page.click(".ssfWCe")
-    await page.waitFor(500);
-    const example = await page.$$('.xFo9P');
-    
-    await example[2].click();
-    await page.waitFor(500);
-    const btn2= await page.$$(".igM9Le")
-    await btn2[2].click();
-    await page.waitForNavigation();
+
     let results = [];
     let isEndNotReached = true;
     while (results.length < limit && isEndNotReached) {
@@ -98,11 +78,11 @@ class GoogleScraper {
    * @returns false if the end of the page is reached. Otherwise true.
    */
   async _scrollToEnd(page) {
-    logger.debug('Scrolling to the end of the page');
+    logger.debug("Scrolling to the end of the page");
 
     const isScrollable = await this._isScrollable(page);
     if (!isScrollable) {
-      logger.debug('No results on this page');
+      logger.debug("No results on this page");
       return false;
     }
 
@@ -110,22 +90,22 @@ class GoogleScraper {
     let infiniteScrollStatus = await this._getInfiniteScrollStatus(page);
 
     if (infiniteScrollStatus === "Looks like you've reached the end") {
-      logger.debug('Reached the end of the page');
+      logger.debug("Reached the end of the page");
       return false;
     }
 
-    const previousHeight = await page.evaluate('document.body.scrollHeight');
+    const previousHeight = await page.evaluate("document.body.scrollHeight");
 
-    await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
     logger.debug(`Scrolled to bottom of the page`);
 
     if (buttonIsVisible) {
       await page.click("#islmp input[type='button']");
-      logger.debug('Clicked on show more results');
+      logger.debug("Clicked on show more results");
     }
 
     await page.waitFor(this.scrollDelay);
-    await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
 
     return true; // We (might) still have some more results
   }
@@ -147,20 +127,21 @@ class GoogleScraper {
 
   _getInfiniteScrollStatus(page) {
     return page.evaluate(() => {
-      let status = document.querySelector('#islmp div[data-endedmessage] > div:last-child')
-        .innerText;
+      let status = document.querySelector(
+        "#islmp div[data-endedmessage] > div:last-child"
+      ).innerText;
       return status;
     });
   }
 
   async _clickAllImages(page) {
-    logger.debug('Scrolling to the end of the page');
+    logger.debug("Scrolling to the end of the page");
     return page.evaluate(() => {
-      let elements = document.querySelectorAll('#islrg img');
+      let elements = document.querySelectorAll("#islrg img");
 
       function rightClick(element) {
-        return new Promise(resolve => {
-          let event = new MouseEvent('mousedown', {
+        return new Promise((resolve) => {
+          let event = new MouseEvent("mousedown", {
             bubbles: true,
             cancelable: false,
             view: window,
@@ -191,10 +172,10 @@ class GoogleScraper {
     $("#islrg a[href^='/imgres']").each(function(i, elem) {
       let description = $(this)
         .next()
-        .find('div > div:first-child')
+        .find("div > div:first-child")
         .text();
 
-      let link = $(this).attr('href');
+      let link = $(this).attr("href");
 
       let parsedLink = url.parse(link, { parseQueryString: true });
       let imageurl = parsedLink.query.imgurl;
