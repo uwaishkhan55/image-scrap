@@ -13,7 +13,7 @@ let noOfImages = 3;
 const google = new Scraper({
   puppeteer: {
     //if yout want to check what is happening behind the script then just change the value of headless -> false.
-    headless: true,
+    headless: false,
   },
 });
 if (process.argv[2] === undefined) {
@@ -33,9 +33,9 @@ fs.createReadStream(in_file_csv)
   .on("end", async () => {
     console.log(results);
     let res = await get(results);
-    console.log("***********************************************************");
-    console.log(res);
-    console.log("***********************************************************");
+    // console.log("***********************************************************");
+    // console.log(res);
+    // console.log("***********************************************************");
     for (let i = 0; i < results.length; i++) {
       let temp = await results[i];
       temp.URL1 = await res[i][0];
@@ -53,14 +53,14 @@ fs.createReadStream(in_file_csv)
     fastcsv.write(data, { headers: true }).pipe(out_put_file);
   });
 
-async function get(array_of_row) {
-  let res2 = [];
-  for (const row of array_of_row) {
+async function get(arr_of_row_in_CSV) {
+  let All_images_url_in_2D_array = [];
+  for (const row of arr_of_row_in_CSV) {
     let dish_name = row.dish_name;
     // if (String(row.URL1) !== "") continue;
     async function res() {
       console.log(dish_name);
-      let res1 = [];
+      let result_from_google = [];
       try {
         const reposnseFromGoogle = await google.scrape(
           String(dish_name),
@@ -68,16 +68,28 @@ async function get(array_of_row) {
         );
 
         reposnseFromGoogle.forEach((imgUrl) => {
-          res1.push(imgUrl.url);
+          result_from_google.push(imgUrl.url);
         });
       } catch (err) {
-        console.log(err);
+        try {
+          const reposnseFromGoogle = await google.scrape(
+            String(dish_name),
+            noOfImages
+          );
+
+          reposnseFromGoogle.forEach((imgUrl) => {
+            result_from_google.push(imgUrl.url);
+          });
+        } catch (err) {
+          console.log(err);
+        }
       }
 
-      return res1;
+      return result_from_google;
     }
+
     let p = await res();
-    res2.push(p);
+    All_images_url_in_2D_array.push(p);
   }
-  return res2;
+  return All_images_url_in_2D_array;
 }
