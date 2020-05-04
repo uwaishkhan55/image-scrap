@@ -13,7 +13,7 @@ let noOfImages = 3;
 const google = new Scraper({
   puppeteer: {
     //if yout want to check what is happening behind the script then just change the value of headless -> false.
-    headless: false,
+    headless: true,
   },
 });
 if (process.argv[2] === undefined) {
@@ -38,10 +38,11 @@ fs.createReadStream(in_file_csv)
     // console.log("***********************************************************");
     for (let i = 0; i < results.length; i++) {
       let temp = await results[i];
+
       temp.URL1 = await res[i][0];
       temp.URL2 = await res[i][1];
       temp.URL3 = await res[i][2];
-
+      temp.copyright = await res[i][3];
       console.log(temp);
       data.push(temp);
     }
@@ -57,32 +58,26 @@ async function get(arr_of_row_in_CSV) {
   let All_images_url_in_2D_array = [];
   for (const row of arr_of_row_in_CSV) {
     let dish_name = row.dish_name;
-    // if (String(row.URL1) !== "") continue;
     async function res() {
       console.log(dish_name);
       let result_from_google = [];
+      let response_from_google;
+      let copyright = 0;
       try {
-        const reposnseFromGoogle = await google.scrape(
-          String(dish_name),
-          noOfImages
-        );
-
-        reposnseFromGoogle.forEach((imgUrl) => {
-          result_from_google.push(imgUrl.url);
-        });
-      } catch (err) {
-        try {
-          const reposnseFromGoogle = await google.scrape(
-            String(dish_name),
-            noOfImages
-          );
-
-          reposnseFromGoogle.forEach((imgUrl) => {
-            result_from_google.push(imgUrl.url);
-          });
-        } catch (err) {
-          console.log(err);
+        response_from_google = await google_image_get(dish_name, 3, 0);
+        if (response_from_google === false) {
+          response_from_google = await google_image_get(dish_name, 3, 0);
         }
+        if (response_from_google.length === 0) {
+          response_from_google = await google_image_get(dish_name, 3, 1);
+          copyright = 1;
+        }
+        response_from_google.map((url) => {
+          result_from_google.push(url.url);
+        });
+        result_from_google[result_from_google.length] = copyright;
+      } catch (e) {
+        console.log(e);
       }
 
       return result_from_google;
@@ -93,3 +88,23 @@ async function get(arr_of_row_in_CSV) {
   }
   return All_images_url_in_2D_array;
 }
+
+const google_image_get = async (
+  dishname,
+  no_of_images,
+  is_copyright_allowed
+) => {
+  let response;
+  try {
+    console.log("working");
+    let results = await google.scrape(
+      String(dishname),
+      noOfImages,
+      is_copyright_allowed
+    );
+    return results;
+  } catch (e) {
+    console.log(e);
+  }
+  return false;
+};

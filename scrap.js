@@ -35,12 +35,16 @@ class GoogleScraper {
     return encodeURIComponent(options);
   }
 
-  async scrape(searchQuery, limit = 100) {
+  async scrape(searchQuery, limit = 100, copywriteAllowed) {
     if (searchQuery === undefined || searchQuery === "") {
       throw new Error("Invalid search query provided");
     }
-    const query = `https://www.google.com/search?q=${searchQuery}&source=lnms&tbm=isch&sa=X&tbs=${this.tbs}&tbs=sur%3Afmc&tbs=sur%3Afmc`;
-
+    let query = "";
+    if (copywriteAllowed === 0)
+      query = `https://www.google.com/search?q=${searchQuery}&source=lnms&tbm=isch&sa=X&tbs=${this.tbs}&tbs=sur%3Afmc`;
+    else
+      query = `https://www.google.com/search?q=${searchQuery}&source=lnms&tbm=isch&sa=X&tbs=${this.tbs}`;
+    console.log(query);
     logger.info(`Start Google search for "${searchQuery}"`);
     const browser = await puppeteer.launch({
       ...this.puppeteerOptions,
@@ -49,7 +53,6 @@ class GoogleScraper {
     const page = await browser.newPage();
     await page.setBypassCSP(true);
     await page.goto(query, {
-      waitUntil: "networkidle2",
       timeout: 12000,
     });
     await page.setViewport({ width: 1920, height: 1080 });
